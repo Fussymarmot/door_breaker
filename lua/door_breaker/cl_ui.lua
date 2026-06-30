@@ -1,0 +1,136 @@
+--[[
+    DOOR BREAKER — UI меню выбора инструмента
+]]
+
+local PANEL = {}
+
+function PANEL:Init()
+    self:SetSize(DoorBreaker.Config.MenuWidth, DoorBreaker.Config.MenuHeight)
+    self:Center()
+    
+    -- применяем смещение
+    local x, y = self:GetPos()
+    self:SetPos(x + DoorBreaker.Config.MenuOffsetX, y + DoorBreaker.Config.MenuOffsetY)
+    
+    self:MakePopup()
+    self:SetKeyboardInputEnabled(false)
+
+    self.tools = {}
+    self.bgMaterial = Material(DoorBreaker.Config.MenuBackground or "", "noclamp smooth")
+
+    -- крестик закрытия
+    self.btnClose = vgui.Create("DButton", self)
+    self.btnClose:SetText("")
+    self.btnClose:SetSize(34, 34)
+    self.btnClose:SetPos(self:GetWide() - 40, 0)
+    self.btnClose.Paint = function(s, w, h)
+        local hover = s:IsHovered()
+        draw.RoundedBox(6, 0, 0, w, h, hover and Color(120, 40, 40, 230) or Color(60, 30, 30, 220))
+        surface.SetDrawColor(230, 220, 210, 255)
+        surface.DrawLine(10, 10, w - 10, h - 10)
+        surface.DrawLine(w - 10, 10, 10, h - 10)
+    end
+    self.btnClose.DoClick = function()
+        surface.PlaySound("ui/buttonclickrelease.wav")
+        self:Remove()
+    end
+end
+
+function PANEL:Paint(w, h)
+    surface.SetDrawColor(255, 255, 255, 255)
+    surface.SetMaterial(self.bgMaterial)
+    surface.DrawTexturedRect(0, 0, w, h)
+
+    if DoorBreaker.Config.MenuShowBorder then
+        surface.SetDrawColor(110, 95, 65, 255)
+        surface.DrawOutlinedRect(0, 0, w, h, 2)
+    end
+end
+
+function PANEL:SetDoor(door)
+    self.door = door
+    self:RebuildButtons()
+end
+
+-- расположение кружков (в долях от размера панели) — повторяет референс:
+-- кулак сверху по центру, топор снизу слева, лом снизу справа
+local LAYOUT = {
+    { x = 0.50, y = 0.25 },
+    { x = 0.50, y = 0.50 },
+    { x = 0.50, y = 0.75 },
+}
+
+function PANEL:RebuildButtons()
+    for _, b in ipairs(self.tools) do
+        if IsValid(b) then b:Remove() end
+    end
+    self.tools = {}
+
+    local ply = LocalPlayer()
+    local size = 132
+
+    for i, toolCfg in ipairs(DoorBreaker.Config.Tools) do
+        local pos = LAYOUT[i] or LAYOUT[#LAYOUT]
+        local available = DoorBreaker.CanUseTool(toolCfg, ply)
+
+        local btn = vgui.Create("DButton", self)
+        btn:SetText("")
+        btn:SetSize(size, size)
+        btn:SetPos(self:GetWide() * pos.x - size / 2, self:GetTall() * pos.y - size / 2)
+
+        local matIcon = Material(toolCfg.icon, "noclamp smooth")
+        local matBg   = Material("door_breaker/lock_method_bg.png", "noclamp smooth")
+        local matTime = Material("door_breaker/timer.png", "noclamp smooth")
+
+        btn.Paint = function(s, w, h)
+            local alpha = available and 255 or 90
+
+            surface.SetDrawColor(255, 255, 255, alpha)
+            surface.SetMaterial(matBg)
+            surface.DrawTexturedRect(0, 0, w, h)
+
+            local iconSize = w * 0.46
+            surface.SetDrawColor(255, 255, 255, alpha)
+            surface.SetMaterial(matIcon)
+            surface.DrawTexturedRect(w / 2 - iconSize / 2, h * 0.16, iconSize, iconSize)
+
+            -- иконка таймера + время снизу кружка
+            local tIconSize = 16
+            local timeTxt = DoorBreaker.FormatTime(toolCfg.time)
+            local txtW = surface.GetTextSize(timeTxt) -- приблизительно, шрифт ниже выставим явно
+
+            surface.SetFont("DermaDefaultBold")
+            local realW = select(1, surface.GetTextSize(timeTxt))
+
+            local totalW = tIconSize + 6 + realW
+            local startX = w / 2 - totalW / 2
+            local rowY = h * 0.74
+
+            surface.SetDrawColor(255, 210, 90, alpha)
+            surface.SetMaterial(matTime)
+            surface.DrawTexturedRect(startX, rowY, tIconSize, tIconSize)
+
+            draw.SimpleText(timeTxt, "DermaDefaultBold", startX + tIconSize + 6, rowY + tIconSize / 2,
+                available and Color(255, 220, 90) or Color(170, 170, 170), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+            if not available then
+                draw.SimpleText("нет инструмента", "DermaDefault", w / 2, h * 0.93,
+                    Color(200, 90, 90), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            end
+        end
+
+        btn.DoClick = function()
+            if not available then
+                surface.PlaySound("buttons/button10.wav")
+                return
+            end
+            surface.PlaySound("ui/buttonclick.wav")
+            DoorBreaker.RequestBreak(self.door, toolCfg.id)
+            self:Remove()
+        end
+
+        table.insert(self.tools, btn)
+    end
+end
+
+vgui.Register("DoorBreakerMenu", PANEL, "DPanel")

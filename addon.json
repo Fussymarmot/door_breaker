@@ -1,0 +1,21 @@
+{
+    "title": "Door system",
+    "type": "tool",
+    "tags": [
+        "roleplay",
+        "realism"
+    ],
+    "ignore": [
+        ".git/*",
+        "*.psd",
+        "*.vcxproj"
+    ],
+    "description": "Аддон добавляющий возможность ломать двери в Garry's Mod как в Day r survival. Включает в себя систему меню, анимации и звуковые эффекты.",
+    "author": "FussyMarmot, Vasilisk",
+    "version": "1.0.1",
+    "workshopdependencies": [
+        "3691338832",
+        "1400654980",
+        "2879766422"
+    ]
+}
