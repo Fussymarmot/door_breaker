@@ -42,6 +42,9 @@ if SERVER then
     resource.AddSingleFile("materials/door_breaker/lock_method_bg.png")
     resource.AddSingleFile("materials/door_breaker/timer.png")
     resource.AddSingleFile("materials/door_breaker/menu_bg.png")
+    resource.AddSingleFile("sound/door_breaker/axe_hit.ogg")
+    resource.AddSingleFile("sound/door_breaker/crowbar_hit.ogg")
+    resource.AddSingleFile("sound/door_breaker/fist_hit.mp3")
 else
     include("door_breaker/cl_ui.lua")
     include("door_breaker/cl_breaking.lua")

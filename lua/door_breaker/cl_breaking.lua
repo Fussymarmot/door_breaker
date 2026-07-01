@@ -59,9 +59,6 @@ net.Receive("DoorBreaker_Hit", function()
     local toolId    = net.ReadString()
     local tool      = DoorBreaker.GetTool(toolId)
 
-    print("DoorBreaker_Hit получен")
-    print("tool:", tool, "weaponSwingAnim:", tool and tool.weaponSwingAnim)
-
     if not IsValid(attacker) then return end
 
     if attacker == LocalPlayer() then
@@ -162,4 +159,14 @@ hook.Add("CalcViewModelView", "DoorBreaker_ManualSwing", function(wep, vm, oldPo
     local newPos = pos + ang:Forward() * fwd + ang:Right() * right + ang:Up() * up
 
     return newPos, newAng
+end)
+
+hook.Add("InitPostEntity", "DoorBreaker_SuggestBind", function()
+    timer.Simple(2, function()
+        chat.AddText(
+            Color(255, 210, 90), "[Door Breaker] ",
+            color_white, "Забинди клавишу для ломания дверей: ",
+            Color(150, 220, 255), "bind \"g\" \"" .. DoorBreaker.Config.Bind .. "\""
+        )
+    end)
 end)
