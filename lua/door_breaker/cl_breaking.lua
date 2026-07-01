@@ -16,6 +16,16 @@ concommand.Add(DoorBreaker.Config.Bind, function()
     local ply = LocalPlayer()
     if not IsValid(ply) then return end
 
+    if not IsValid(DoorBreaker.ActiveMenu) then
+        if not DoorBreaker.HintShown then
+            DoorBreaker.HintShown = true
+            chat.AddText(
+                Color(255, 210, 90), "[Door Breaker] ",
+                color_white, "Чтобы использовать топор или лом — держи их в руках перед взломом."
+            )
+        end
+    end
+
     -- уже открыто меню или уже идёт взлом — игнорируем повторное нажатие
     if IsValid(DoorBreaker.ActiveMenu) then return end
     if DoorBreaker.Breaking then return end
