@@ -33,6 +33,7 @@ if SERVER then
     util.AddNetworkString("DoorBreaker_Broken")
 
     include("door_breaker/sv_breaking.lua")
+    include("door_breaker/sv_model_swap.lua")
 
     -- на всякий случай прописываем картинки в ресурсы,
     -- чтобы они гарантированно докачались клиентам
