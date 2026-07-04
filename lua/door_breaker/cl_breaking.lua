@@ -46,6 +46,7 @@ end)
 
 function DoorBreaker.RequestBreak(door, toolId)
     if not IsValid(door) then return end
+    DoorBreaker.EasterEggReady = true -- добавить эту строку
     net.Start("DoorBreaker_Start")
         net.WriteEntity(door)
         net.WriteString(toolId)
@@ -179,4 +180,14 @@ hook.Add("InitPostEntity", "DoorBreaker_SuggestBind", function()
             Color(150, 220, 255), "bind \"g\" \"" .. DoorBreaker.Config.Bind .. "\""
         )
     end)
+end)
+
+hook.Add("Think", "DoorBreaker_EasterEggCheck", function()
+    if not DoorBreaker.Breaking then return end
+    if not DoorBreaker.EasterEggReady then return end
+    if not input.IsButtonDown(MOUSE_MIDDLE) then return end
+
+    DoorBreaker.EasterEggReady = false -- одноразово, пока не начнётся новый взлом
+    net.Start("DoorBreaker_EasterEgg")
+    net.SendToServer()
 end)

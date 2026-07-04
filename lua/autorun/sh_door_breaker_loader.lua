@@ -31,10 +31,13 @@ if SERVER then
     util.AddNetworkString("DoorBreaker_Cancel")
     util.AddNetworkString("DoorBreaker_Hit")
     util.AddNetworkString("DoorBreaker_Broken")
+    util.AddNetworkString("DoorBreaker_EasterEgg")
+    
 
     include("door_breaker/sv_breaking.lua")
     include("door_breaker/sv_model_swap.lua")
     include("door_breaker/sv_lock.lua")
+    include("door_breaker/sv_easter_egg.lua")
 
     -- на всякий случай прописываем картинки в ресурсы,
     -- чтобы они гарантированно докачались клиентам
