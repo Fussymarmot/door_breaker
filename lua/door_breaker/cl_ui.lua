@@ -69,7 +69,14 @@ function PANEL:RebuildButtons()
     local ply = LocalPlayer()
     local size = 132
 
-    for i, toolCfg in ipairs(DoorBreaker.Config.Tools) do
+    local availableTools = {}
+    for _, toolCfg in ipairs(DoorBreaker.Config.Tools) do
+        if DoorBreaker.ToolAllowedForDoor(toolCfg, self.door) then
+            table.insert(availableTools, toolCfg)
+        end
+    end
+
+    for i, toolCfg in ipairs(availableTools) do
         local pos = LAYOUT[i] or LAYOUT[#LAYOUT]
         local available = DoorBreaker.CanUseTool(toolCfg, ply)
 
@@ -96,7 +103,7 @@ function PANEL:RebuildButtons()
 
             -- иконка таймера + время снизу кружка
             local tIconSize = 16
-            local timeTxt = DoorBreaker.FormatTime(toolCfg.time)
+            local timeTxt = DoorBreaker.FormatTime(DoorBreaker.GetToolTime(toolCfg, self.door))
             local txtW = surface.GetTextSize(timeTxt) -- приблизительно, шрифт ниже выставим явно
 
             surface.SetFont("DermaDefaultBold")

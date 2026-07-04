@@ -64,3 +64,25 @@ function DoorBreaker.CanUseTool(tool, ply)
 
     return tool.requiredWeapons[wep:GetClass()] == true
 end
+-- тип двери (wood/iron) по её текущему скину
+function DoorBreaker.GetDoorType(door)
+    if not IsValid(door) then return "wood" end
+    local skin = door:GetSkin() or 0
+    return DoorBreaker.Config.DoorTypes[skin] or "wood"
+end
+
+-- разрешено ли ломать эту дверь конкретным инструментом (по типу двери)
+function DoorBreaker.ToolAllowedForDoor(tool, door)
+    if not tool.doorTypes then return true end
+    return tool.doorTypes[DoorBreaker.GetDoorType(door)] == true
+end
+-- реальное время взлома с учётом типа двери (если у инструмента задан timeByDoorType)
+function DoorBreaker.GetToolTime(tool, door)
+    if tool.timeByDoorType then
+        local doorType = DoorBreaker.GetDoorType(door)
+        if tool.timeByDoorType[doorType] then
+            return tool.timeByDoorType[doorType]
+        end
+    end
+    return tool.time
+end

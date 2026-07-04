@@ -55,6 +55,40 @@ DoorBreaker.Config = {
         ["models/props_c17/door01_left.mdl"] = "models/door_breaker/door01_left_custom.mdl",
         -- ["models/props_c17/door01a.mdl"]   = "models/door_breaker/door01a_custom.mdl",
     },
+    -- Рандомный скин при заспавне двери (для дверей, которым подменяется
+    -- модель через CustomModelReplacements выше).
+    -- chance = 0.10 -> 10% дверей получат один из скинов пула,
+    -- остальные 90% останутся со скином 0 (обычная дверь).
+    RandomSkin = {
+        chance = 0.10,
+        pool   = {14, 15, 16, 17}, -- номера скинов (door_breaker_skin1..4)
+    },
+
+    -- Тип двери по номеру скина. От этого зависит, каким инструментом
+    -- её можно ломать (см. поле doorTypes у инструментов ниже).
+    -- ВНИМАНИЕ: сейчас у всех 4 доп. скинов surfaceprop "wood" в vmt,
+    -- то есть по текстурам это варианты дерева. Если скины 3 и 4 у вас
+    -- визуально металлические — поменяйте им тип на "iron" вручную:
+    DoorTypes = {
+        [0] = "wood",
+        [1] = "wood",
+        [2] = "wood",
+        [3] = "wood",
+        [4] = "wood",
+        [5] = "wood",
+        [6] = "wood",
+        [7] = "iron",
+        [8] = "iron",
+        [9] = "iron",
+        [10] = "iron",
+        [11] = "wood",
+        [12] = "iron",
+        [13] = "wood",
+        [14] = "wood",
+        [15] = "iron",
+        [16] = "wood", 
+        [17] = "iron", 
+    },
 
     -- список доступных инструментов взлома.
     -- порядок в массиве = порядок кружков в меню:
@@ -67,6 +101,7 @@ DoorBreaker.Config = {
             time        = 150, -- 2:30
             hitSound    = "door_breaker/fist_hit.mp3",
             hitInterval = 0.6,
+            doorTypes = { wood = true },
         },
         {
             id             = "axe",
@@ -86,12 +121,16 @@ DoorBreaker.Config = {
             hitInterval    = 0.8,
             weaponSwingAnim = true,
             swingDuration   = 0.38, 
+            doorTypes = { wood = true },
         },
         {
             id          = "crowbar",
             name        = "Лом",
             icon        = "door_breaker/crowbar.png",
-            time        = 10,
+            time        = 10, -- время по умолчанию (дерево)
+            timeByDoorType = {
+                iron = 150, -- 2:30 для железной двери
+            },
             requiredWeapons = {
                 ["weapon_crowbar"] = true, -- стандартный лом, поменять если появится свой
             },
@@ -99,6 +138,37 @@ DoorBreaker.Config = {
             hitInterval = 0.5,
             weaponSwingAnim = true,
             swingDuration   = 0.24,
+            doorTypes = { wood = true, iron = true },
         },
+        {
+            id          = "hacksaw",
+            name        = "Пила",
+            icon        = "door_breaker/hacksaw.png",
+            time        = 60,
+            requiredWeapons = {
+                ["weapon_hacksaw"] = true, -- стандартная пила, поменять если появится свой
+            },
+            hitSound    = "door_breaker/hacksaws.ogg",
+            hitInterval = 0.5,
+            weaponSwingAnim = true,
+            swingDuration   = 0.24,
+            doorTypes = { iron = true },
+        },
+        {
+            id          = "grenade",
+            name        = "Граната",
+            icon        = "door_breaker/grenade.png",
+            time        = 1,
+            requiredWeapons = {
+                ["dayr_handmade_grenade"] = true, -- заменить на реальный класс взрывчатки, если он есть
+            },
+            hitSound    = "door_breaker/explosion.ogg",
+            hitInterval = 0.5,
+            weaponSwingAnim = true,
+            swingDuration   = 0.24,
+            doorTypes = { iron = true },
+        },
+        
+
     },
 }

@@ -34,6 +34,7 @@ if SERVER then
 
     include("door_breaker/sv_breaking.lua")
     include("door_breaker/sv_model_swap.lua")
+    include("door_breaker/sv_lock.lua")
 
     -- на всякий случай прописываем картинки в ресурсы,
     -- чтобы они гарантированно докачались клиентам
@@ -43,9 +44,15 @@ if SERVER then
     resource.AddSingleFile("materials/door_breaker/lock_method_bg.png")
     resource.AddSingleFile("materials/door_breaker/timer.png")
     resource.AddSingleFile("materials/door_breaker/menu_bg.png")
+    resource.AddSingleFile("materials/door_breaker/explosives.png")
+    resource.AddSingleFile("materials/door_breaker/hacksaws.png")
+    resource.AddSingleFile("materials/door_breaker/f1.png")
+    resource.AddSingleFile("materials/door_breaker/grenade.png")
     resource.AddSingleFile("sound/door_breaker/axe_hit.ogg")
     resource.AddSingleFile("sound/door_breaker/crowbar_hit.ogg")
     resource.AddSingleFile("sound/door_breaker/fist_hit.mp3")
+    resource.AddSingleFile("sound/door_breaker/explosion.ogg")
+    resource.AddSingleFile("sound/door_breaker/hacksaws.ogg")
 else
     include("door_breaker/cl_ui.lua")
     include("door_breaker/cl_breaking.lua")

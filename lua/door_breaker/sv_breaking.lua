@@ -29,7 +29,7 @@ function DoorBreaker.StartBreaking(ply, door, tool)
     ply.DoorBreaker_Door   = door
 
     local startTime  = CurTime()
-    local duration    = tool.time
+    local duration = DoorBreaker.GetToolTime(tool, door)
     local lastHitTime = 0
     local tname        = TimerName(ply)
 
@@ -152,6 +152,7 @@ net.Receive("DoorBreaker_Start", function(_, ply)
     if not tool then return end
     if not IsValid(door) then return end
     if not DoorBreaker.IsBreakable(door, ply) then return end
+    if not DoorBreaker.ToolAllowedForDoor(tool, door) then return end
     if door.DoorBreaker_InProgress then return end
 
     if ply:GetPos():DistToSqr(door:GetPos()) > (DoorBreaker.Config.MaxUseDistance ^ 2) then return end

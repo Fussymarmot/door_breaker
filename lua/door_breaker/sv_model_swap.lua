@@ -20,6 +20,12 @@ local function SwapModel(ent)
     if not replacement then return end
 
     ent:SetModel(replacement)
+
+    local rs = DoorBreaker.Config.RandomSkin
+    if rs and rs.pool and #rs.pool > 0 and math.random() <= rs.chance then
+        ent:SetSkin(rs.pool[math.random(#rs.pool)])
+        ent.DoorBreaker_Locked = true -- эта дверь теперь открывается только через взлом
+    end
 end
 
 -- двери, уже стоящие на карте при старте
