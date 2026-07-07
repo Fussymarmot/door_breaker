@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 publish.py — сборка .gma и публикация обновления в Steam Workshop одной командой.
 
@@ -6,7 +5,6 @@ publish.py — сборка .gma и публикация обновления в
     ./gmad_linux create -folder "<addon>" -out "<addon>.gma"
     ./gmpublish_linux update -id "<workshop_id>" -addon "<addon>.gma" -changes "<текст>"
 
-Один раз настраиваешь пути ниже в блоке DEFAULTS — дальше просто:
     python publish.py
     python publish.py --bump patch
     python publish.py --changes "Добавил анимацию ударов"
