@@ -5,12 +5,22 @@
     нельзя открыть обычным Use — только сломать через систему взлома.
 ]]
 
+local lockedDoorMessageCooldown = {}
+
 hook.Add("PlayerUse", "DoorBreaker_BlockLockedDoors", function(ply, ent)
     if not IsValid(ent) then return end
+    if not IsValid(ply) then return end
     if not ent.DoorBreaker_Locked then return end
     if ent.DoorBreaker_Broken then return end -- уже сломана — пусть работает как обычно
 
-    ply:ChatPrint("Дверь заблокирована. Её можно только выломать.")
+    local now = CurTime()
+    local key = ply:EntIndex() .. ":" .. ent:EntIndex()
+
+    if not lockedDoorMessageCooldown[key] or now - lockedDoorMessageCooldown[key] >= 0.25 then
+        ply:ChatPrint("Дверь заблокирована. Её можно только выломать.")
+        lockedDoorMessageCooldown[key] = now
+    end
+
     return false
 end)
 
