@@ -16,19 +16,14 @@ concommand.Add(DoorBreaker.Config.Bind, function()
     local ply = LocalPlayer()
     if not IsValid(ply) then return end
 
-    if not IsValid(DoorBreaker.ActiveMenu) then
-        if not DoorBreaker.HintShown then
-            DoorBreaker.HintShown = true
-            chat.AddText(
-                Color(255, 210, 90), "[Door Breaker] ",
-                color_white, "Чтобы использовать топор или лом — держи их в руках перед взломом."
-            )
-        end
-    end
-
-    -- уже открыто меню или уже идёт взлом — игнорируем повторное нажатие
-    if IsValid(DoorBreaker.ActiveMenu) then return end
+    -- во время взлома нажатие клавиши ничего не делает
     if DoorBreaker.Breaking then return end
+
+    -- повторное нажатие при открытом меню (и когда взлом не идёт) — закрываем его
+    if IsValid(DoorBreaker.ActiveMenu) then
+        DoorBreaker.ActiveMenu:Remove()
+        return
+    end
 
     local tr = util.TraceLine({
         start  = ply:EyePos(),
@@ -44,9 +39,21 @@ concommand.Add(DoorBreaker.Config.Bind, function()
     DoorBreaker.ActiveMenu = panel
 end)
 
+-- подсказка при заходе на карту, один раз за сессию
+hook.Add("InitPostEntity", "DoorBreaker_StartupHint", function()
+    timer.Simple(3, function()
+        chat.AddText(
+            Color(255, 210, 90), "[Door System] ",
+            color_white, "Чтобы использовать топор или лом — держи их в руках перед взломом. Клавишу можно поменять в Q-меню -> Utilities -> Door System."
+        )
+    end)
+end)
+
+-- Запрашивает у сервера старт взлома выбранным инструментом.
 function DoorBreaker.RequestBreak(door, toolId)
     if not IsValid(door) then return end
-    DoorBreaker.EasterEggReady = true -- добавить эту строку
+
+    DoorBreaker.EasterEggReady = true
     net.Start("DoorBreaker_Start")
         net.WriteEntity(door)
         net.WriteString(toolId)
@@ -87,7 +94,7 @@ net.Receive("DoorBreaker_Hit", function()
     end
 end)
 
--- автоотмена, если игрок начинает двигаться или прыгать во время взлома
+-- Отменяет взлом, если игрок начал двигаться или прыгать.
 hook.Add("Think", "DoorBreaker_CancelOnMove", function()
     if not DoorBreaker.Breaking then return end
     local ply = LocalPlayer()
@@ -109,7 +116,6 @@ hook.Add("HUDPaint", "DoorBreaker_ProgressBar", function()
     local barW, barH = 380, 24
     local x, y = w / 2 - barW / 2, h - 150
 
-    -- лёгкая вспышка в момент "удара"
     local pulse = math.max(0, 1 - (CurTime() - DoorBreaker.LastHitTime) / 0.25)
 
     draw.RoundedBox(5, x - 3, y - 3, barW + 6, barH + 6, Color(0, 0, 0, 190))
@@ -125,9 +131,7 @@ hook.Add("HUDPaint", "DoorBreaker_ProgressBar", function()
         w / 2, y + barH / 2, color_black, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 end)
 
--- ручной мах вьюмоделью — не зависит от анимаций самого оружия,
--- подменяет финальную позицию/угол вьюмодели уже после всей логики SWEP'а
--- три опорные позы маха: исходная -> замах -> удар -> исходная
+-- Переопределяет позицию viewmodel для более точного ощущения удара.
 local SWING_KEYFRAMES = {
     { t = 0.00, ang = Angle(0, 0, 0),     fwd = 0,  right = 0,  up = 0  },
     { t = 0.35, ang = Angle(16, -12, 10), fwd = -4, right = -2, up = -2 }, -- замах назад-вверх
@@ -172,22 +176,22 @@ hook.Add("CalcViewModelView", "DoorBreaker_ManualSwing", function(wep, vm, oldPo
     return newPos, newAng
 end)
 
-hook.Add("InitPostEntity", "DoorBreaker_SuggestBind", function()
-    timer.Simple(2, function()
-        chat.AddText(
-            Color(255, 210, 90), "[Door Breaker] ",
-            color_white, "Забинди клавишу для ломания дверей: ",
-            Color(150, 220, 255), "bind \"g\" \"" .. DoorBreaker.Config.Bind .. "\""
-        )
-    end)
-end)
 
+-- Проверяет пасхалку: одноразовый триггер по нажатию колёсика мыши.
 hook.Add("Think", "DoorBreaker_EasterEggCheck", function()
     if not DoorBreaker.Breaking then return end
     if not DoorBreaker.EasterEggReady then return end
     if not input.IsButtonDown(MOUSE_MIDDLE) then return end
 
-    DoorBreaker.EasterEggReady = false -- одноразово, пока не начнётся новый взлом
+    DoorBreaker.EasterEggReady = false
     net.Start("DoorBreaker_EasterEgg")
     net.SendToServer()
+end)
+
+-- Обновляет состояние двери после её разрушения на сервере.
+net.Receive("DoorBreaker_Broken", function()
+    local door = net.ReadEntity()
+    if IsValid(door) then
+        door.DoorBreaker_Broken = true
+    end
 end)

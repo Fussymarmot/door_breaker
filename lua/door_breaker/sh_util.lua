@@ -4,7 +4,7 @@
 
 DoorBreaker = DoorBreaker or {}
 
--- найти конфиг инструмента по id ("fist" / "axe" / "crowbar")
+-- Находит конфиг инструмента по его идентификатору.
 function DoorBreaker.GetTool(id)
     for _, tool in ipairs(DoorBreaker.Config.Tools) do
         if tool.id == id then return tool end
@@ -12,7 +12,7 @@ function DoorBreaker.GetTool(id)
     return nil
 end
 
--- 150 -> "2:30"
+-- Преобразует секунды в формат вида 2:30.
 function DoorBreaker.FormatTime(seconds)
     seconds = math.max(0, math.floor(seconds))
     local m = math.floor(seconds / 60)
@@ -20,7 +20,7 @@ function DoorBreaker.FormatTime(seconds)
     return string.format("%d:%02d", m, s)
 end
 
--- энтити вообще похожа на дверь, которую можно ломать (по классу)
+-- Проверяет, что сущность относится к классу дверей.
 function DoorBreaker.IsValidDoorClass(ent)
     return IsValid(ent) and DoorBreaker.Config.ValidClasses[ent:GetClass()] == true
 end
@@ -54,7 +54,7 @@ function DoorBreaker.IsBreakable(ent, ply)
     return true
 end
 
--- может ли игрок использовать конкретный инструмент (есть ли нужное оружие)
+-- Проверяет, что игрок держит нужное оружие для выбранного инструмента.
 function DoorBreaker.CanUseTool(tool, ply)
     if not tool.requiredWeapons then return true end
     if not IsValid(ply) then return false end
@@ -64,19 +64,19 @@ function DoorBreaker.CanUseTool(tool, ply)
 
     return tool.requiredWeapons[wep:GetClass()] == true
 end
--- тип двери (wood/iron) по её текущему скину
+-- Возвращает тип двери по текущему скину.
 function DoorBreaker.GetDoorType(door)
     if not IsValid(door) then return "wood" end
     local skin = door:GetSkin() or 0
     return DoorBreaker.Config.DoorTypes[skin] or "wood"
 end
 
--- разрешено ли ломать эту дверь конкретным инструментом (по типу двери)
+-- Проверяет, подходит ли инструмент для текущего типа двери.
 function DoorBreaker.ToolAllowedForDoor(tool, door)
     if not tool.doorTypes then return true end
     return tool.doorTypes[DoorBreaker.GetDoorType(door)] == true
 end
--- реальное время взлома с учётом типа двери (если у инструмента задан timeByDoorType)
+-- Возвращает время взлома с учётом типа двери.
 function DoorBreaker.GetToolTime(tool, door)
     if tool.timeByDoorType then
         local doorType = DoorBreaker.GetDoorType(door)

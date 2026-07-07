@@ -19,10 +19,13 @@ end
 IncludeShared("door_breaker/sh_config.lua")
 IncludeShared("door_breaker/sh_util.lua")
 
+
 if SERVER then
+    CreateConVar("door_breaker_skin_chance", "0.10", FCVAR_ARCHIVE, "Шанс появления кастомного скина двери (0.0 - 1.0)")
     -- говорим клиенту скачать клиентские файлы
     AddCSLuaFile("door_breaker/cl_ui.lua")
     AddCSLuaFile("door_breaker/cl_breaking.lua")
+    AddCSLuaFile("door_breaker/cl_settings.lua")
 
     -- сетевые строки — регистрируются один раз на сервере
     util.AddNetworkString("DoorBreaker_Start")
@@ -48,7 +51,7 @@ if SERVER then
     resource.AddSingleFile("materials/door_breaker/timer.png")
     resource.AddSingleFile("materials/door_breaker/menu_bg.png")
     resource.AddSingleFile("materials/door_breaker/explosives.png")
-    resource.AddSingleFile("materials/door_breaker/hacksaws.png")
+    resource.AddSingleFile("materials/door_breaker/hacksaw.png")
     resource.AddSingleFile("materials/door_breaker/f1.png")
     resource.AddSingleFile("materials/door_breaker/grenade.png")
     resource.AddSingleFile("sound/door_breaker/axe_hit.ogg")
@@ -59,4 +62,5 @@ if SERVER then
 else
     include("door_breaker/cl_ui.lua")
     include("door_breaker/cl_breaking.lua")
+    include("door_breaker/cl_settings.lua")
 end

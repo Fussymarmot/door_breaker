@@ -2,10 +2,12 @@
     DOOR BREAKER — серверная логика
 ]]
 
+-- Формирует уникальное имя таймера для игрока.
 local function TimerName(ply)
     return "DoorBreaker_" .. ply:SteamID64()
 end
 
+-- Останавливает текущий взлом и чистит состояние игрока/двери.
 function DoorBreaker.CancelBreaking(ply, door)
     if IsValid(ply) then
         local tname = TimerName(ply)
@@ -23,6 +25,7 @@ function DoorBreaker.CancelBreaking(ply, door)
     end
 end
 
+-- Запускает цикл взлома и отправляет прогресс клиенту.
 function DoorBreaker.StartBreaking(ply, door, tool)
     door.DoorBreaker_InProgress = true
     ply.DoorBreaker_Active = true
@@ -34,7 +37,6 @@ function DoorBreaker.StartBreaking(ply, door, tool)
     local tname        = TimerName(ply)
 
     timer.Create(tname, 0.1, 0, function()
-        -- всё ещё валидно?
         if not IsValid(ply) or not IsValid(door) then
             DoorBreaker.CancelBreaking(ply, door)
             return
@@ -63,7 +65,6 @@ function DoorBreaker.StartBreaking(ply, door, tool)
             net.WriteString(tool.id)
         net.Send(ply)
 
-        -- звук + виупанч "удара" с заданным интервалом
         if tool.hitInterval and (elapsed - lastHitTime) >= tool.hitInterval then
             lastHitTime = elapsed
             if tool.hitSound then
@@ -90,8 +91,7 @@ function DoorBreaker.StartBreaking(ply, door, tool)
     end)
 end
 
--- собственно "слом" двери: прячем оригинал, спавним физический пропс,
--- который слетает с петель
+-- Прячем оригинальную дверь и создаём её физический сломанный аналог.
 function DoorBreaker.BreakDoor(door)
     if not IsValid(door) then return end
     if door.DoorBreaker_Broken then return end

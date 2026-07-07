@@ -4,21 +4,25 @@
 
 local PANEL = {}
 
+-- Инициализирует и позиционирует панель выбора инструмента.
 function PANEL:Init()
     self:SetSize(DoorBreaker.Config.MenuWidth, DoorBreaker.Config.MenuHeight)
     self:Center()
-    
-    -- применяем смещение
+
     local x, y = self:GetPos()
     self:SetPos(x + DoorBreaker.Config.MenuOffsetX, y + DoorBreaker.Config.MenuOffsetY)
-    
+
     self:MakePopup()
     self:SetKeyboardInputEnabled(false)
+
+    hook.Add("CreateMove", "DoorBreaker_FreezeMenu", function(cmd)
+        cmd:ClearMovement()
+        cmd:ClearButtons()
+    end)
 
     self.tools = {}
     self.bgMaterial = Material(DoorBreaker.Config.MenuBackground or "", "noclamp smooth")
 
-    -- крестик закрытия
     self.btnClose = vgui.Create("DButton", self)
     self.btnClose:SetText("")
     self.btnClose:SetSize(34, 34)
@@ -36,6 +40,12 @@ function PANEL:Init()
     end
 end
 
+-- Убирает временный хук при закрытии меню.
+function PANEL:OnRemove()
+    hook.Remove("CreateMove", "DoorBreaker_FreezeMenu")
+end
+
+-- Рисует фон и рамку меню.
 function PANEL:Paint(w, h)
     surface.SetDrawColor(255, 255, 255, 255)
     surface.SetMaterial(self.bgMaterial)
@@ -47,19 +57,20 @@ function PANEL:Paint(w, h)
     end
 end
 
+-- Привязывает меню к конкретной двери.
 function PANEL:SetDoor(door)
     self.door = door
     self:RebuildButtons()
 end
 
--- расположение кружков (в долях от размера панели) — повторяет референс:
--- кулак сверху по центру, топор снизу слева, лом снизу справа
+-- Положение кнопок внутри панели.
 local LAYOUT = {
     { x = 0.50, y = 0.25 },
     { x = 0.50, y = 0.50 },
     { x = 0.50, y = 0.75 },
 }
 
+-- Пересобирает список доступных инструментов и кнопки.
 function PANEL:RebuildButtons()
     for _, b in ipairs(self.tools) do
         if IsValid(b) then b:Remove() end
@@ -101,7 +112,6 @@ function PANEL:RebuildButtons()
             surface.SetMaterial(matIcon)
             surface.DrawTexturedRect(w / 2 - iconSize / 2, h * 0.16, iconSize, iconSize)
 
-            -- иконка таймера + время снизу кружка
             local tIconSize = 16
             local timeTxt = DoorBreaker.FormatTime(DoorBreaker.GetToolTime(toolCfg, self.door))
             local txtW = surface.GetTextSize(timeTxt) -- приблизительно, шрифт ниже выставим явно
