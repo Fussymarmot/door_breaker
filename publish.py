@@ -22,9 +22,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-# ─────────────────────────────────────────────────────────────
-#  НАСТРОЙ ЭТИ ПУТИ ОДИН РАЗ ПОД СЕБЯ
-# ─────────────────────────────────────────────────────────────
 DEFAULTS = {
     "gmad_bin":      "/home/fussy/.local/share/Steam/steamapps/common/GarrysMod/bin/gmad_linux",
     "gmpublish_bin": "/home/fussy/.local/share/Steam/steamapps/common/GarrysMod/bin/gmpublish_linux",
@@ -32,7 +29,6 @@ DEFAULTS = {
     "gma_out":       "/home/fussy/.local/share/Steam/steamapps/common/GarrysMod/garrysmod/addons/door_breaker.gma",
     "workshop_id":   "3755230335",
 }
-# ─────────────────────────────────────────────────────────────
 
 
 def bump_version(version: str, part: str) -> str:
@@ -113,7 +109,6 @@ def main():
         else:
             changes = input("Текст чейнджлога для Workshop: ").strip() or f"Update {version}"
 
-    # 1) сборка .gma — добавляем номер версии к имени файла
     out_path = Path(args.out)
     if out_path.suffix:
         out_path = out_path.with_name(f"{out_path.stem}-v{version}{out_path.suffix}")
@@ -126,7 +121,6 @@ def main():
         print(f"\n[OK] .gma собран: {out_path} (публикация пропущена, --skip-publish)")
         return
 
-    # 2) публикация обновления в Workshop
     run([args.gmpublish, "update", "-id", args.id, "-addon", str(out_path), "-changes", changes])
 
     print(f"\n[OK] Опубликовано. Версия: {version}. Чейнджлог: \"{changes}\"")
