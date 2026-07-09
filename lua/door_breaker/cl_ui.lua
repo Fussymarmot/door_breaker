@@ -179,14 +179,6 @@ function PANEL:RebuildButtons()
 
             surface.PlaySound("ui/buttonclick.wav")
             DoorBreaker.RequestBreak(self.door, toolCfg.id)
-
-            if DoorBreaker.Config.MinigameMenu and DoorBreaker.Config.MinigameMenu.enabled then
-                local mg = vgui.Create("DoorBreakerMinigame")
-                if IsValid(mg) then
-                    mg:SetDoor(self.door)
-                end
-            end
-
             self:Remove()
         end
 

@@ -51,8 +51,9 @@ end)
 -- Запрашивает у сервера старт взлома выбранным инструментом.
 function DoorBreaker.RequestBreak(door, toolId)
     if not IsValid(door) then return end
-
     DoorBreaker.EasterEggReady = true
+    DoorBreaker.PendingDoor = door
+
     net.Start("DoorBreaker_Start")
         net.WriteEntity(door)
         net.WriteString(toolId)
@@ -94,6 +95,25 @@ net.Receive("DoorBreaker_Hit", function()
     if tool and tool.weaponSwingAnim then
         attacker:DoAttackEvent()
     end
+end)
+
+net.Receive("DoorBreaker_StartResult", function()
+    local success = net.ReadBool()
+
+    if not success then
+        DoorBreaker.PendingDoor = nil
+        chat.AddText(Color(220, 90, 90), "[Door Breaker] ", color_white, "Не удалось начать взлом.")
+        return
+    end
+
+    if DoorBreaker.Config.MinigameMenu and DoorBreaker.Config.MinigameMenu.enabled and IsValid(DoorBreaker.PendingDoor) then
+        local mg = vgui.Create("DoorBreakerMinigame")
+        if IsValid(mg) then
+            mg:SetDoor(DoorBreaker.PendingDoor)
+        end
+    end
+
+    DoorBreaker.PendingDoor = nil
 end)
 
 -- Отменяет взлом, если игрок начал двигаться или прыгать.

@@ -35,6 +35,7 @@ if SERVER then
     util.AddNetworkString("DoorBreaker_Broken")
     util.AddNetworkString("DoorBreaker_EasterEgg")
     util.AddNetworkString("DoorBreaker_MinigameHit")
+    util.AddNetworkString("DoorBreaker_StartResult")
 
     include("door_breaker/sv_breaking.lua")
     include("door_breaker/sv_model_swap.lua")

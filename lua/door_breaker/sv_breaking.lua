@@ -7,8 +7,7 @@ local function TimerName(ply)
     return "DoorBreaker_" .. ply:SteamID64()
 end
 
--- Полностью останавливает таймер по имени и освобождает дверь.
--- Не зависит от валидности ply — safe to call даже если игрок уже отключился.
+-- Останавливает таймер и снимает флаг активного взлома.
 local function StopTimerAndRelease(tname, door)
     if timer.Exists(tname) then
         timer.Remove(tname)
@@ -19,8 +18,7 @@ local function StopTimerAndRelease(tname, door)
     end
 end
 
--- Останавливает текущий взлом и очищает состояние игрока и двери.
--- Вызывается для ЖИВОГО игрока (отмена по движению, дистанции и т.д.)
+-- Отменяет текущий взлом и очищает состояние игрока и двери.
 function DoorBreaker.CancelBreaking(ply, door)
     if IsValid(ply) then
         StopTimerAndRelease(TimerName(ply), door)
@@ -173,20 +171,30 @@ end
 
 net.Receive("DoorBreaker_Start", function(_, ply)
     if not IsValid(ply) then return end
-    if ply.DoorBreaker_Active then return end
 
     local door = net.ReadEntity()
     local toolId = net.ReadString()
+
+    local function Reject()
+        net.Start("DoorBreaker_StartResult")
+            net.WriteBool(false)
+        net.Send(ply)
+    end
+
+    if ply.DoorBreaker_Active then return Reject() end
+
     local tool = DoorBreaker.GetTool(toolId)
+    if not tool then return Reject() end
+    if not IsValid(door) then return Reject() end
+    if not DoorBreaker.IsBreakable(door, ply) then return Reject() end
+    if not DoorBreaker.ToolAllowedForDoor(tool, door) then return Reject() end
+    if door.DoorBreaker_InProgress then return Reject() end
+    if ply:GetPos():DistToSqr(door:GetPos()) > (DoorBreaker.Config.MaxUseDistance ^ 2) then return Reject() end
+    if not DoorBreaker.CanUseTool(tool, ply) then return Reject() end
 
-    if not tool then return end
-    if not IsValid(door) then return end
-    if not DoorBreaker.IsBreakable(door, ply) then return end
-    if not DoorBreaker.ToolAllowedForDoor(tool, door) then return end
-    if door.DoorBreaker_InProgress then return end
-
-    if ply:GetPos():DistToSqr(door:GetPos()) > (DoorBreaker.Config.MaxUseDistance ^ 2) then return end
-    if not DoorBreaker.CanUseTool(tool, ply) then return end
+    net.Start("DoorBreaker_StartResult")
+        net.WriteBool(true)
+    net.Send(ply)
 
     DoorBreaker.StartBreaking(ply, door, tool)
 end)
@@ -203,6 +211,7 @@ hook.Add("PlayerDisconnected", "DoorBreaker_CleanupOnDisconnect", function(ply)
     StopTimerAndRelease(tname, door)
 end)
 
+-- Даёт дополнительное время за успешные клики мини-игры.
 net.Receive("DoorBreaker_MinigameHit", function(_, ply)
     if not IsValid(ply) or not ply.DoorBreaker_Active then return end
 

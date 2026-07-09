@@ -106,6 +106,13 @@ end
 
 -- Обновляет состояние мини-игры и убирает просроченные крестики.
 function PANEL:Think()
+    if not self.failsafeUntil then
+        self.failsafeUntil = CurTime() + 100 -- 5 минут — абсолютный потолок на любой случай
+    end
+    if CurTime() > self.failsafeUntil then
+        self:Remove()
+        return
+    end
     if self.state ~= "breaking" then
         if self.state == "open" and CurTime() > self.openUntil then
             self:Remove()
