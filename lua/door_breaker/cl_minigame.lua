@@ -28,6 +28,26 @@ function PANEL:Init()
     self.openUntil = 0
 
     self.frameMat = Material(cfg.frame, "noclamp smooth")
+
+    self.btnClose = vgui.Create("DButton", self)
+    self.btnClose:SetText("")
+    self.btnClose:SetSize(34, 34)
+    self.btnClose:SetPos(self:GetWide() - 35, 0)
+    self.btnClose.Paint = function(s, w, h)
+        local hover = s:IsHovered()
+        draw.RoundedBox(6, 0, 0, w, h, hover and Color(120, 40, 40, 230) or Color(60, 30, 30, 220))
+        surface.SetDrawColor(230, 220, 210, 255)
+        surface.DrawLine(10, 10, w - 10, h - 10)
+        surface.DrawLine(w - 10, 10, 10, h - 10)
+    end
+    self.btnClose.DoClick = function()
+        surface.PlaySound("ui/buttonclickrelease.wav")
+
+        net.Start("DoorBreaker_Cancel")
+        net.SendToServer()
+
+        self:Remove()
+    end
 end
 
 -- Убирает временные хуки при удалении панели.
@@ -156,6 +176,14 @@ function PANEL:Paint(w, h)
             for i = -thickness / 2, thickness / 2 do
                 surface.DrawLine(c.x - size / 2 + i, c.y - size / 2, c.x + size / 2 + i, c.y + size / 2)
             end
+        end
+
+        local tool = DoorBreaker.GetTool(DoorBreaker.BreakToolId)
+        if tool and self.door then
+            local totalTime = DoorBreaker.GetToolTime(tool, self.door)
+            local remaining = math.ceil(totalTime * (1 - DoorBreaker.BreakProgress))
+            draw.SimpleText(DoorBreaker.FormatTime(remaining), "DermaLarge",
+                w / 2, h - 20, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
         end
     end
 
