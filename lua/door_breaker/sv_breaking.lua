@@ -7,20 +7,11 @@ local function TimerName(ply)
     return "DoorBreaker_" .. ply:SteamID64()
 end
 
--- Останавливает текущий взлом и очищает состояние игрока и двери.
-function DoorBreaker.CancelBreaking(ply, door)
-    if IsValid(ply) then
-        local tname = TimerName(ply)
-        if timer.Exists(tname) then
-            timer.Remove(tname)
-        end
-
-        ply.DoorBreaker_Active = false
-        ply.DoorBreaker_Door = nil
-
-        net.Start("DoorBreaker_Stop")
-            net.WriteBool(false)
-        net.Send(ply)
+-- Полностью останавливает таймер по имени и освобождает дверь.
+-- Не зависит от валидности ply — safe to call даже если игрок уже отключился.
+local function StopTimerAndRelease(tname, door)
+    if timer.Exists(tname) then
+        timer.Remove(tname)
     end
 
     if IsValid(door) then
@@ -28,21 +19,51 @@ function DoorBreaker.CancelBreaking(ply, door)
     end
 end
 
+-- Останавливает текущий взлом и очищает состояние игрока и двери.
+-- Вызывается для ЖИВОГО игрока (отмена по движению, дистанции и т.д.)
+function DoorBreaker.CancelBreaking(ply, door)
+    if IsValid(ply) then
+        StopTimerAndRelease(TimerName(ply), door)
+
+        ply.DoorBreaker_Active = false
+        ply.DoorBreaker_Door = nil
+
+        net.Start("DoorBreaker_Stop")
+            net.WriteBool(false)
+        net.Send(ply)
+    elseif IsValid(door) then
+        door.DoorBreaker_InProgress = false
+    end
+end
+
 -- Запускает цикл взлома и отправляет прогресс клиенту.
 function DoorBreaker.StartBreaking(ply, door, tool)
+    local tname = TimerName(ply)
+
+    if timer.Exists(tname) then
+        timer.Remove(tname)
+    end
+
     door.DoorBreaker_InProgress = true
     ply.DoorBreaker_Active = true
     ply.DoorBreaker_Door = door
     ply.DoorBreaker_TimeBonus = 0
 
     local startTime = CurTime()
-    local duration = DoorBreaker.GetToolTime(tool, door)
+    local duration = math.max(DoorBreaker.GetToolTime(tool, door) or 0, 1) -- защита от 0/nil
+    local hardTimeout = duration + 20 -- абсолютный потолок на случай любого зависания
     local lastHitTime = 0
-    local tname = TimerName(ply)
 
     timer.Create(tname, 0.1, 0, function()
-        if not IsValid(ply) or not IsValid(door) then
-            DoorBreaker.CancelBreaking(ply, door)
+        if not IsValid(ply) then
+            StopTimerAndRelease(tname, door)
+            return
+        end
+
+        if not IsValid(door) then
+            StopTimerAndRelease(tname, door)
+            ply.DoorBreaker_Active = false
+            ply.DoorBreaker_Door = nil
             return
         end
 
@@ -57,6 +78,11 @@ function DoorBreaker.StartBreaking(ply, door, tool)
         end
 
         if not DoorBreaker.CanUseTool(tool, ply) then
+            DoorBreaker.CancelBreaking(ply, door)
+            return
+        end
+
+        if CurTime() - startTime > hardTimeout then
             DoorBreaker.CancelBreaking(ply, door)
             return
         end
@@ -82,10 +108,9 @@ function DoorBreaker.StartBreaking(ply, door, tool)
         end
 
         if progress >= 1 then
-            timer.Remove(tname)
+            StopTimerAndRelease(tname, door)
             ply.DoorBreaker_Active = false
             ply.DoorBreaker_Door = nil
-            door.DoorBreaker_InProgress = false
 
             net.Start("DoorBreaker_Stop")
                 net.WriteBool(true)
@@ -173,13 +198,9 @@ end)
 
 hook.Add("PlayerDisconnected", "DoorBreaker_CleanupOnDisconnect", function(ply)
     local tname = TimerName(ply)
-    if timer.Exists(tname) then
-        timer.Remove(tname)
-    end
+    local door = ply.DoorBreaker_Door
 
-    if IsValid(ply.DoorBreaker_Door) then
-        ply.DoorBreaker_Door.DoorBreaker_InProgress = false
-    end
+    StopTimerAndRelease(tname, door)
 end)
 
 net.Receive("DoorBreaker_MinigameHit", function(_, ply)
