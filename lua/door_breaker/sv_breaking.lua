@@ -1,5 +1,5 @@
 --[[
-    DOOR BREAKER — серверная логика
+    DOOR BREAKER — серверная логика взлома
 ]]
 
 -- Формирует уникальное имя таймера для игрока.
@@ -7,16 +7,19 @@ local function TimerName(ply)
     return "DoorBreaker_" .. ply:SteamID64()
 end
 
--- Останавливает текущий взлом и чистит состояние игрока/двери.
+-- Останавливает текущий взлом и очищает состояние игрока и двери.
 function DoorBreaker.CancelBreaking(ply, door)
     if IsValid(ply) then
         local tname = TimerName(ply)
-        if timer.Exists(tname) then timer.Remove(tname) end
+        if timer.Exists(tname) then
+            timer.Remove(tname)
+        end
 
         ply.DoorBreaker_Active = false
-        ply.DoorBreaker_Door   = nil
+        ply.DoorBreaker_Door = nil
 
         net.Start("DoorBreaker_Stop")
+            net.WriteBool(false)
         net.Send(ply)
     end
 
@@ -29,12 +32,13 @@ end
 function DoorBreaker.StartBreaking(ply, door, tool)
     door.DoorBreaker_InProgress = true
     ply.DoorBreaker_Active = true
-    ply.DoorBreaker_Door   = door
+    ply.DoorBreaker_Door = door
+    ply.DoorBreaker_TimeBonus = 0
 
-    local startTime  = CurTime()
+    local startTime = CurTime()
     local duration = DoorBreaker.GetToolTime(tool, door)
     local lastHitTime = 0
-    local tname        = TimerName(ply)
+    local tname = TimerName(ply)
 
     timer.Create(tname, 0.1, 0, function()
         if not IsValid(ply) or not IsValid(door) then
@@ -57,7 +61,7 @@ function DoorBreaker.StartBreaking(ply, door, tool)
             return
         end
 
-        local elapsed  = CurTime() - startTime
+        local elapsed = (CurTime() - startTime) + (ply.DoorBreaker_TimeBonus or 0)
         local progress = math.Clamp(elapsed / duration, 0, 1)
 
         net.Start("DoorBreaker_Progress")
@@ -80,10 +84,11 @@ function DoorBreaker.StartBreaking(ply, door, tool)
         if progress >= 1 then
             timer.Remove(tname)
             ply.DoorBreaker_Active = false
-            ply.DoorBreaker_Door   = nil
+            ply.DoorBreaker_Door = nil
             door.DoorBreaker_InProgress = false
 
             net.Start("DoorBreaker_Stop")
+                net.WriteBool(true)
             net.Send(ply)
 
             DoorBreaker.BreakDoor(door)
@@ -91,25 +96,23 @@ function DoorBreaker.StartBreaking(ply, door, tool)
     end)
 end
 
--- Прячем оригинальную дверь и создаём её физический сломанный аналог.
+-- Прячет оригинальную дверь и создаёт её физический сломанный аналог.
 function DoorBreaker.BreakDoor(door)
     if not IsValid(door) then return end
     if door.DoorBreaker_Broken then return end
     door.DoorBreaker_Broken = true
 
     local pos, ang = door:GetPos(), door:GetAngles()
-    local model    = door:GetModel()
-    local skin     = door:GetSkin()
+    local model = door:GetModel()
+    local skin = door:GetSkin()
 
     door:EmitSound("physics/wood/wood_furniture_break2.wav", 80, 100)
 
-    -- оригинальная дверь больше не мешает и не видна
     door:SetSolid(SOLID_NONE)
     door:SetNotSolid(true)
     door:SetNoDraw(true)
     door:SetCollisionGroup(COLLISION_GROUP_WORLD)
 
-    -- физический пропс сорванной двери
     if model and model ~= "" then
         local broken = ents.Create("prop_physics")
         if IsValid(broken) then
@@ -130,7 +133,9 @@ function DoorBreaker.BreakDoor(door)
 
             if DoorBreaker.Config.RemoveBrokenAfter and DoorBreaker.Config.RemoveBrokenAfter > 0 then
                 timer.Simple(DoorBreaker.Config.RemoveBrokenAfter, function()
-                    if IsValid(broken) then broken:Remove() end
+                    if IsValid(broken) then
+                        broken:Remove()
+                    end
                 end)
             end
         end
@@ -145,9 +150,9 @@ net.Receive("DoorBreaker_Start", function(_, ply)
     if not IsValid(ply) then return end
     if ply.DoorBreaker_Active then return end
 
-    local door   = net.ReadEntity()
+    local door = net.ReadEntity()
     local toolId = net.ReadString()
-    local tool   = DoorBreaker.GetTool(toolId)
+    local tool = DoorBreaker.GetTool(toolId)
 
     if not tool then return end
     if not IsValid(door) then return end
@@ -156,7 +161,6 @@ net.Receive("DoorBreaker_Start", function(_, ply)
     if door.DoorBreaker_InProgress then return end
 
     if ply:GetPos():DistToSqr(door:GetPos()) > (DoorBreaker.Config.MaxUseDistance ^ 2) then return end
-
     if not DoorBreaker.CanUseTool(tool, ply) then return end
 
     DoorBreaker.StartBreaking(ply, door, tool)
@@ -169,8 +173,19 @@ end)
 
 hook.Add("PlayerDisconnected", "DoorBreaker_CleanupOnDisconnect", function(ply)
     local tname = TimerName(ply)
-    if timer.Exists(tname) then timer.Remove(tname) end
+    if timer.Exists(tname) then
+        timer.Remove(tname)
+    end
+
     if IsValid(ply.DoorBreaker_Door) then
         ply.DoorBreaker_Door.DoorBreaker_InProgress = false
     end
+end)
+
+net.Receive("DoorBreaker_MinigameHit", function(_, ply)
+    if not IsValid(ply) or not ply.DoorBreaker_Active then return end
+
+    local cfg = DoorBreaker.Config.MinigameMenu
+    local bonus = cfg and cfg.timeBonusPerHit or 2
+    ply.DoorBreaker_TimeBonus = (ply.DoorBreaker_TimeBonus or 0) + bonus
 end)

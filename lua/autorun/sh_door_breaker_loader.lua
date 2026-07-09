@@ -1,8 +1,5 @@
 --[[
     DOOR BREAKER — загрузчик аддона
-    -----------------------------------------------------------
-    Лежит в lua/autorun, поэтому подхватывается движком сам
-    (и на сервере, и на клиенте — префикс sh_).
     Подключает все файлы из lua/door_breaker/.
 ]]
 
@@ -12,22 +9,24 @@ local function IncludeShared(path)
     if SERVER then
         AddCSLuaFile(path)
     end
+
     include(path)
 end
 
--- ОБЩЕЕ (конфиг + утилиты нужны и серверу, и клиенту)
+-- Общие файлы нужны как на сервере, так и на клиенте.
 IncludeShared("door_breaker/sh_config.lua")
 IncludeShared("door_breaker/sh_util.lua")
 
-
 if SERVER then
     CreateConVar("door_breaker_skin_chance", "0.10", FCVAR_ARCHIVE, "Шанс появления кастомного скина двери (0.0 - 1.0)")
-    -- говорим клиенту скачать клиентские файлы
+
+    -- Клиентские файлы отправляются игрокам.
     AddCSLuaFile("door_breaker/cl_ui.lua")
     AddCSLuaFile("door_breaker/cl_breaking.lua")
     AddCSLuaFile("door_breaker/cl_settings.lua")
+    AddCSLuaFile("door_breaker/cl_minigame.lua")
 
-    -- сетевые строки — регистрируются один раз на сервере
+    -- Сетевые строки регистрируются один раз на сервере.
     util.AddNetworkString("DoorBreaker_Start")
     util.AddNetworkString("DoorBreaker_Progress")
     util.AddNetworkString("DoorBreaker_Stop")
@@ -35,15 +34,14 @@ if SERVER then
     util.AddNetworkString("DoorBreaker_Hit")
     util.AddNetworkString("DoorBreaker_Broken")
     util.AddNetworkString("DoorBreaker_EasterEgg")
-    
+    util.AddNetworkString("DoorBreaker_MinigameHit")
 
     include("door_breaker/sv_breaking.lua")
     include("door_breaker/sv_model_swap.lua")
     include("door_breaker/sv_lock.lua")
     include("door_breaker/sv_easter_egg.lua")
 
-    -- на всякий случай прописываем картинки в ресурсы,
-    -- чтобы они гарантированно докачались клиентам
+    -- Ресурсы добавляются в список для скачивания клиентам.
     resource.AddSingleFile("materials/door_breaker/axe.png")
     resource.AddSingleFile("materials/door_breaker/crowbar.png")
     resource.AddSingleFile("materials/door_breaker/fist.png")
@@ -54,6 +52,17 @@ if SERVER then
     resource.AddSingleFile("materials/door_breaker/hacksaw.png")
     resource.AddSingleFile("materials/door_breaker/f1.png")
     resource.AddSingleFile("materials/door_breaker/grenade.png")
+
+    resource.AddSingleFile("materials/door_breaker/minigame/frame.png")
+    resource.AddSingleFile("materials/door_breaker/minigame/locked_door.jpg")
+    resource.AddSingleFile("materials/door_breaker/minigame/locked_door_open.jpg")
+    resource.AddSingleFile("materials/door_breaker/minigame/wood_door.jpg")
+    resource.AddSingleFile("materials/door_breaker/minigame/wood_door_open.jpg")
+    resource.AddSingleFile("materials/door_breaker/minigame/iron_door.jpg")
+    resource.AddSingleFile("materials/door_breaker/minigame/iron_door_open.jpg")
+    resource.AddSingleFile("materials/door_breaker/minigame/steel_door.jpg")
+    resource.AddSingleFile("materials/door_breaker/minigame/steel_door_open.jpg")
+
     resource.AddSingleFile("sound/door_breaker/axe_hit.ogg")
     resource.AddSingleFile("sound/door_breaker/crowbar_hit.ogg")
     resource.AddSingleFile("sound/door_breaker/fist_hit.mp3")
@@ -63,4 +72,5 @@ else
     include("door_breaker/cl_ui.lua")
     include("door_breaker/cl_breaking.lua")
     include("door_breaker/cl_settings.lua")
+    include("door_breaker/cl_minigame.lua")
 end

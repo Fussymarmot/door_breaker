@@ -1,10 +1,5 @@
 --[[
-    DOOR BREAKER — подмена моделей дверей на кастомные (с доп. скинами)
-    -----------------------------------------------------------
-    Смотрит DoorBreaker.Config.CustomModelReplacements и меняет
-    модель у всех подходящих дверей на кастомную версию с доп. скинами.
-    Двойные двери (стоящие вплотную парой) исключаются из лотереи
-    случайного скина — участвуют только одиночные двери.
+    DOOR BREAKER — подмена моделей дверей на кастомные
 ]]
 
 -- Проверяет, не является ли дверь частью двойной пары.
@@ -17,14 +12,14 @@ local function IsPartOfDoubleDoor(ent, candidates)
             end
         end
     end
+
     return false
 end
 
--- Применяет случайный скин и при необходимости убирает ручку двери.
+-- Применяет случайный скин и, при необходимости, убирает ручку двери.
 function ApplyRandomSkin(ent, candidates)
     if not IsValid(ent) then return end
 
-    -- двойные двери (стоящие вплотную, открывающиеся парой) пропускают лотерею скина
     if IsPartOfDoubleDoor(ent, candidates) then return end
 
     local rs = DoorBreaker.Config.RandomSkin
@@ -37,7 +32,6 @@ function ApplyRandomSkin(ent, candidates)
     ent:SetSkin(chosenSkin)
     ent.DoorBreaker_Locked = true
 
-    -- ручку убираем только если этот скин есть в списке DoorHandleBodygroup.skins
     local hg = DoorBreaker.Config.DoorHandleBodygroup
     if hg and hg.skins then
         for _, skinId in ipairs(hg.skins) do
@@ -70,7 +64,7 @@ function SwapModel(ent, candidates)
     ApplyRandomSkin(ent, candidates)
 end
 
--- двери, уже стоящие на карте при старте
+-- Обрабатывает двери, уже стоящие на карте при старте.
 hook.Add("InitPostEntity", "DoorBreaker_SwapDoorModels_Existing", function()
     timer.Simple(0, function()
         local doors = {}
@@ -86,7 +80,7 @@ hook.Add("InitPostEntity", "DoorBreaker_SwapDoorModels_Existing", function()
     end)
 end)
 
--- двери, заспавненные позже (spawnmenu, lua_run, другие аддоны и т.д.)
+-- Обрабатывает двери, заспавненные позже.
 hook.Add("OnEntityCreated", "DoorBreaker_SwapDoorModels_New", function(ent)
     timer.Simple(0.1, function()
         if not IsValid(ent) then return end
@@ -94,14 +88,16 @@ hook.Add("OnEntityCreated", "DoorBreaker_SwapDoorModels_New", function(ent)
 
         local doors = {}
         for _, e in ipairs(ents.FindByClass(ent:GetClass())) do
-            if IsValid(e) then table.insert(doors, e) end
+            if IsValid(e) then
+                table.insert(doors, e)
+            end
         end
 
         SwapModel(ent, doors)
     end)
 end)
 
--- Пересчитывает все двери после изменения конваров без перезахода на карту.
+-- Пересчитывает все двери после изменения конвара без перезахода на карту.
 local function RerollAllDoors(reason)
     local doors = {}
     for _, ent in ipairs(ents.GetAll()) do
@@ -118,7 +114,6 @@ local function RerollAllDoors(reason)
 
     print("[Door Breaker] " .. reason .. ", двери пересчитаны: " .. #doors)
 end
-
 
 cvars.AddChangeCallback("door_breaker_skin_chance", function(_, oldValue, newValue)
     RerollAllDoors("Шанс скина изменён (" .. oldValue .. " -> " .. newValue .. ")")

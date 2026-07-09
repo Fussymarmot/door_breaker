@@ -1,16 +1,12 @@
 --[[
     DOOR BREAKER — настройка клавиши через Q-меню
-    -----------------------------------------------------------
-    Заменяет ручной bind в консоли на удобный DBinder в спавнменю.
-    Так как движок блокирует выполнение команды "bind" из аддонов,
-    клавиша отслеживается вручную через Think и дёргает ту же самую
-    консольную команду, что раньше вызывалась через bind.
 ]]
 
 CreateClientConVar("door_breaker_key", tostring(KEY_G), true, false, "Клавиша для взлома дверей (Door Breaker)")
 
 local wasDown = false
 
+-- Следит за нажатием назначенной клавиши и запускает нужную команду.
 hook.Add("Think", "DoorBreaker_KeyTrigger", function()
     local key = GetConVar("door_breaker_key"):GetInt()
     if key <= 0 then
@@ -23,8 +19,7 @@ hook.Add("Think", "DoorBreaker_KeyTrigger", function()
         return
     end
 
-    -- если открыто именно наше меню — не блокируем по курсору,
-    -- иначе повторное нажатие не сможет его закрыть
+    -- Если меню открыто и курсор виден, клавиша не должна блокировать его.
     if not IsValid(DoorBreaker.ActiveMenu) and vgui.CursorVisible() then
         wasDown = false
         return
@@ -39,6 +34,7 @@ hook.Add("Think", "DoorBreaker_KeyTrigger", function()
     wasDown = down
 end)
 
+-- Добавляет настройки в панель Utilities.
 hook.Add("PopulateToolMenu", "DoorBreaker_SettingsTab", function()
     spawnmenu.AddToolMenuOption("Utilities", "Door System", "DoorBreakerSettings", "Настройки", "", "", function(panel)
         panel:ClearControls()
@@ -49,8 +45,6 @@ hook.Add("PopulateToolMenu", "DoorBreaker_SettingsTab", function()
         binder:SetSize(200, 24)
         binder:SetValue(GetConVar("door_breaker_key"):GetInt())
 
-        -- у DBinder нет SetConVar (это метод только у DCheckBoxLabel/DNumSlider и т.п.),
-        -- поэтому конвар обновляем вручную через OnChange
         binder.OnChange = function(self, num)
             RunConsoleCommand("door_breaker_key", tostring(num))
         end

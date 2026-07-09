@@ -1,18 +1,16 @@
 --[[
     DOOR BREAKER — пасхалка: дверь на голову
-    -----------------------------------------------------------
-    Если во время взлома игрок жмёт колесико мыши, ему на голову
-    падает дверь и убивает его.
 ]]
 
 local lastTrigger = {}
 
+-- Создаёт падающую дверь при активации пасхалки во время взлома.
 net.Receive("DoorBreaker_EasterEgg", function(_, ply)
     if not IsValid(ply) or not ply:Alive() then return end
 
     local cfg = DoorBreaker.Config.EasterEgg
     if not cfg or not cfg.enabled then return end
-    if not ply.DoorBreaker_Active then return end -- только во время реального взлома
+    if not ply.DoorBreaker_Active then return end
 
     local steamid = ply:SteamID64()
     local now = CurTime()
@@ -26,7 +24,7 @@ net.Receive("DoorBreaker_EasterEgg", function(_, ply)
 
     door:SetModel(cfg.model)
     door:SetPos(headPos)
-    door:SetAngles(Angle(0, math.random(0, 360), 90)) -- плашмя, чтобы точно накрыло
+    door:SetAngles(Angle(0, math.random(0, 360), 90))
     door:Spawn()
 
     local phys = door:GetPhysicsObject()
@@ -35,7 +33,6 @@ net.Receive("DoorBreaker_EasterEgg", function(_, ply)
         phys:SetMass(400)
     end
 
-    -- гарантированное убийство при касании, не полагаясь на физ. урон движка
     door.Touch = function(self, ent)
         if ent == ply and IsValid(ply) and ply:Alive() then
             ply:TakeDamage(1000, self, self)
@@ -44,6 +41,8 @@ net.Receive("DoorBreaker_EasterEgg", function(_, ply)
     end
 
     timer.Simple(8, function()
-        if IsValid(door) then door:Remove() end
+        if IsValid(door) then
+            door:Remove()
+        end
     end)
 end)

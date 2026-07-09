@@ -1,32 +1,30 @@
 --[[
-    DOOR BREAKER — клиентская логика взлома (бинд, прогресс-бар, ощущения от ударов)
+    DOOR BREAKER — клиентская логика взлома
 ]]
 
-DoorBreaker.Breaking      = false
+DoorBreaker.Breaking = false
 DoorBreaker.BreakProgress = 0
-DoorBreaker.BreakToolId   = nil
-DoorBreaker.LastHitTime   = 0
+DoorBreaker.BreakToolId = nil
+DoorBreaker.LastHitTime = 0
 
-DoorBreaker.SwingUntil    = 0
+DoorBreaker.SwingUntil = 0
 DoorBreaker.SwingDuration = 0
 
--- консольная команда, которую игрок биндит себе на клавишу:
---   bind "g" "door_breaker_use"
+-- Консольная команда, которую игрок назначает себе в bind.
 concommand.Add(DoorBreaker.Config.Bind, function()
     local ply = LocalPlayer()
     if not IsValid(ply) then return end
 
-    -- во время взлома нажатие клавиши ничего не делает
     if DoorBreaker.Breaking then return end
 
-    -- повторное нажатие при открытом меню (и когда взлом не идёт) — закрываем его
+    -- Повторное нажатие при открытом меню закрывает его.
     if IsValid(DoorBreaker.ActiveMenu) then
         DoorBreaker.ActiveMenu:Remove()
         return
     end
 
     local tr = util.TraceLine({
-        start  = ply:EyePos(),
+        start = ply:EyePos(),
         endpos = ply:EyePos() + ply:EyeAngles():Forward() * DoorBreaker.Config.MaxUseDistance,
         filter = ply,
     })
@@ -39,12 +37,13 @@ concommand.Add(DoorBreaker.Config.Bind, function()
     DoorBreaker.ActiveMenu = panel
 end)
 
--- подсказка при заходе на карту, один раз за сессию
+-- Подсказка при заходе на карту, один раз за сессию.
 hook.Add("InitPostEntity", "DoorBreaker_StartupHint", function()
     timer.Simple(3, function()
         chat.AddText(
             Color(255, 210, 90), "[Door System] ",
-            color_white, "Чтобы использовать топор или лом — держи их в руках перед взломом. Клавишу можно поменять в Q-меню -> Utilities -> Door System."
+            color_white,
+            "Чтобы использовать топор или лом — держи их в руках перед взломом. Клавишу можно поменять в Q-меню -> Utilities -> Door System."
         )
     end)
 end)
@@ -61,21 +60,24 @@ function DoorBreaker.RequestBreak(door, toolId)
 end
 
 net.Receive("DoorBreaker_Progress", function()
-    DoorBreaker.Breaking      = true
+    DoorBreaker.Breaking = true
     DoorBreaker.BreakProgress = net.ReadFloat()
-    DoorBreaker.BreakToolId   = net.ReadString()
+    DoorBreaker.BreakToolId = net.ReadString()
 end)
 
 net.Receive("DoorBreaker_Stop", function()
-    DoorBreaker.Breaking      = false
+    local completed = net.ReadBool()
+    DoorBreaker.Breaking = false
     DoorBreaker.BreakProgress = 0
-    DoorBreaker.BreakToolId   = nil
+    DoorBreaker.BreakToolId = nil
+
+    hook.Run("DoorBreaker_ClientStopped", completed)
 end)
 
 net.Receive("DoorBreaker_Hit", function()
     local attacker = net.ReadEntity()
-    local toolId    = net.ReadString()
-    local tool      = DoorBreaker.GetTool(toolId)
+    local toolId = net.ReadString()
+    local tool = DoorBreaker.GetTool(toolId)
 
     if not IsValid(attacker) then return end
 
@@ -85,7 +87,7 @@ net.Receive("DoorBreaker_Hit", function()
 
         if tool and tool.weaponSwingAnim then
             DoorBreaker.SwingDuration = tool.swingDuration or 0.25
-            DoorBreaker.SwingUntil    = CurTime() + DoorBreaker.SwingDuration
+            DoorBreaker.SwingUntil = CurTime() + DoorBreaker.SwingDuration
         end
     end
 
@@ -97,6 +99,7 @@ end)
 -- Отменяет взлом, если игрок начал двигаться или прыгать.
 hook.Add("Think", "DoorBreaker_CancelOnMove", function()
     if not DoorBreaker.Breaking then return end
+
     local ply = LocalPlayer()
     if not IsValid(ply) then return end
 
@@ -108,7 +111,7 @@ hook.Add("Think", "DoorBreaker_CancelOnMove", function()
     end
 end)
 
--- прогресс-бар внизу экрана
+-- Прогресс-бар внизу экрана.
 hook.Add("HUDPaint", "DoorBreaker_ProgressBar", function()
     if not DoorBreaker.Breaking then return end
 
@@ -120,23 +123,36 @@ hook.Add("HUDPaint", "DoorBreaker_ProgressBar", function()
 
     draw.RoundedBox(5, x - 3, y - 3, barW + 6, barH + 6, Color(0, 0, 0, 190))
     draw.RoundedBox(5, x, y, barW, barH, Color(35, 32, 28, 230))
-    draw.RoundedBox(5, x, y, barW * DoorBreaker.BreakProgress, barH,
-        Color(220 + pulse * 30, 170 + pulse * 40, 40, 255))
+    draw.RoundedBox(5, x, y, barW * DoorBreaker.BreakProgress, barH, Color(220 + pulse * 30, 170 + pulse * 40, 40, 255))
 
     local tool = DoorBreaker.GetTool(DoorBreaker.BreakToolId)
-    draw.SimpleText(tool and tool.name or "Взлом двери", "DermaDefaultBold",
-        w / 2, y - 16, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+    draw.SimpleText(
+        tool and tool.name or "Взлом двери",
+        "DermaDefaultBold",
+        w / 2,
+        y - 16,
+        color_white,
+        TEXT_ALIGN_CENTER,
+        TEXT_ALIGN_BOTTOM
+    )
 
-    draw.SimpleText(math.ceil(DoorBreaker.BreakProgress * 100) .. "%", "DermaDefaultBold",
-        w / 2, y + barH / 2, color_black, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    draw.SimpleText(
+        math.ceil(DoorBreaker.BreakProgress * 100) .. "%",
+        "DermaDefaultBold",
+        w / 2,
+        y + barH / 2,
+        color_black,
+        TEXT_ALIGN_CENTER,
+        TEXT_ALIGN_CENTER
+    )
 end)
 
 -- Переопределяет позицию viewmodel для более точного ощущения удара.
 local SWING_KEYFRAMES = {
-    { t = 0.00, ang = Angle(0, 0, 0),     fwd = 0,  right = 0,  up = 0  },
-    { t = 0.35, ang = Angle(16, -12, 10), fwd = -4, right = -2, up = -2 }, -- замах назад-вверх
-    { t = 0.55, ang = Angle(-34, 6, -12), fwd = 10, right = 3,  up = -6 }, -- удар вперёд-вниз
-    { t = 1.00, ang = Angle(0, 0, 0),     fwd = 0,  right = 0,  up = 0  }, -- возврат
+    { t = 0.00, ang = Angle(0, 0, 0), fwd = 0, right = 0, up = 0 },
+    { t = 0.35, ang = Angle(16, -12, 10), fwd = -4, right = -2, up = -2 },
+    { t = 0.55, ang = Angle(-34, 6, -12), fwd = 10, right = 3, up = -6 },
+    { t = 1.00, ang = Angle(0, 0, 0), fwd = 0, right = 0, up = 0 },
 }
 
 local function EaseInOutQuad(t)
@@ -159,6 +175,7 @@ local function GetSwingPose(t)
                 Lerp(localT, a.up, b.up)
         end
     end
+
     return Angle(0, 0, 0), 0, 0, 0
 end
 
@@ -176,8 +193,7 @@ hook.Add("CalcViewModelView", "DoorBreaker_ManualSwing", function(wep, vm, oldPo
     return newPos, newAng
 end)
 
-
--- Проверяет пасхалку: одноразовый триггер по нажатию колёсика мыши.
+-- Проверяет пасхалку: триггер по нажатию колёсика мыши.
 hook.Add("Think", "DoorBreaker_EasterEggCheck", function()
     if not DoorBreaker.Breaking then return end
     if not DoorBreaker.EasterEggReady then return end

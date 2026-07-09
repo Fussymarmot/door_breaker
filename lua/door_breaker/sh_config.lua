@@ -1,78 +1,87 @@
 --[[
     DOOR BREAKER — конфиг
-    -----------------------------------------------------------
-    Всё, что нужно подкрутить под себя — здесь.
+    Все настройки доступны в одном месте.
 ]]
 
 DoorBreaker = DoorBreaker or {}
 
 DoorBreaker.Config = {
-
-    -- имя консольной команды, на которую вешается бинд игроком:
-    -- в консоли игрок пишет, например:  bind "g" "door_breaker_use"
+    -- Имя консольной команды, на которую игрок вешает bind.
     Bind = "door_breaker_use",
 
-    -- с какой дистанции можно НАЧАТЬ взлом (юниты)
+    -- С какой дистанции можно начать взлом.
     MaxUseDistance = 90,
 
-    -- если игрок отойдёт от двери дальше этого — взлом прервётся
+    -- Если игрок отойдёт дальше этого расстояния, взлом прервётся.
     MaxBreakDistance = 130,
 
-    -- путь к фону меню выбора инструмента
+    -- Путь к фону меню выбора инструмента.
     MenuBackground = "door_breaker/menu_bg.png",
 
-    -- размер меню (ширина, высота)
-    MenuWidth = 250,
-    MenuHeight = 520,
+    -- Размер меню.
+    MenuWidth = 400,
+    MenuHeight = 405,
 
-    -- смещение меню от центра экрана (положительное = вправо, положительное = вниз)
+    -- Смещение меню от центра экрана.
     MenuOffsetX = 400,
     MenuOffsetY = 0,
 
-    -- показывать рамку вокруг меню (true/false)
+    -- Показывать рамку вокруг меню.
     MenuShowBorder = false,
 
-    -- классы энтити, которые считаются "дверьми" для системы взлома.
-    -- сюда же стоит добавить классы, которые использует
-    -- Simple Combine Door Opener на ваших картах, если они отличаются.
+    -- Мини-игра во время взлома.
+    MinigameMenu = {
+        enabled = true,
+        frame = "door_breaker/minigame/frame.png",
+
+        -- Фон в зависимости от скина двери.
+        backgroundsBySkin = {
+            [0] = "locked_door",
+            [14] = "locked_door",
+            [15] = "iron_door",
+            [16] = "wood_door",
+            [17] = "steel_door",
+        },
+
+        width = 400,
+        height = 405,
+
+        -- Зона спавна крестиков в долях от размера изображения.
+        hitZone = { x1 = 0.28, y1 = 0.08, x2 = 0.74, y2 = 0.88 },
+
+        crossSize = 32,
+        crossLifetime = 1.4,
+        crossSpawnEvery = 0.9,
+        timeBonusPerHit = 3,
+        openHoldTime = 1.3,
+    },
+
+    -- Классы сущностей, которые считаются дверями.
     ValidClasses = {
-        ["func_door"]          = true,
+        ["func_door"] = true,
         ["func_door_rotating"] = true,
-        ["prop_dynamic"]       = true,
+        ["prop_dynamic"] = true,
         ["prop_door_rotating"] = true,
     },
 
-    -- через сколько секунд удалять сорванную с петель дверь (0 = никогда)
+    -- Через сколько секунд удалять сорванную дверь.
     RemoveBrokenAfter = 0,
 
-    -- Подмена моделей на кастомные (с доп. скинами сверх стандартных).
-    -- Ключ — оригинальная модель (как она стоит на карте),
-    -- значение — твоя перекомпилированная модель с новыми скинами.
-    -- Все двери с оригинальной моделью (уже стоящие на карте,
-    -- заспавненные через lua_run/spawnmenu, и т.д.) автоматически
-    -- получат новую модель при появлении на сервере.
+    -- Подмена моделей на кастомные с дополнительными скинами.
     CustomModelReplacements = {
         ["models/props_c17/door01_left.mdl"] = "models/door_breaker/door01_left_custom.mdl",
-        -- ["models/props_c17/door01a.mdl"]   = "models/door_breaker/door01a_custom.mdl",
     },
-    -- Рандомный скин при заспавне двери (для дверей, которым подменяется
-    -- модель через CustomModelReplacements выше).
-    -- chance = 0.10 -> 10% дверей получат один из скинов пула,
-    -- остальные 90% останутся со скином 0 (обычная дверь).
+
+    -- Случайный скин для дверей с заменённой моделью.
     RandomSkin = {
         chance = 0.10,
-        pool   = {14, 15, 16, 17}, -- номера скинов (door_breaker_skin1..4)
+        pool = { 14, 15, 16, 17 },
     },
 
-    -- расстояние, в пределах которого две двери считаются "двойными"
-    -- (открывающимися парой) и не участвуют в лотерее скина по отдельности
+    -- Расстояние, при котором двери считаются двойными.
     DoubleDoorDetectRadius = 50,
 
-    -- Тип двери по номеру скина. От этого зависит, каким инструментом
-    -- её можно ломать (см. поле doorTypes у инструментов ниже).
-    -- ВНИМАНИЕ: сейчас у всех 4 доп. скинов surfaceprop "wood" в vmt,
-    -- то есть по текстурам это варианты дерева. Если скины 3 и 4 у вас
-    -- визуально металлические — поменяйте им тип на "iron" вручную:
+    -- Тип двери по номеру скина.
     DoorTypes = {
         [0] = "wood",
         [1] = "wood",
@@ -90,106 +99,99 @@ DoorBreaker.Config = {
         [13] = "wood",
         [14] = "wood",
         [15] = "iron",
-        [16] = "wood", 
-        [17] = "iron", 
+        [16] = "wood",
+        [17] = "iron",
     },
 
     -- Bodygroup ручки на кастомной модели двери.
-    -- Убирается ТОЛЬКО у дверей с одним из скинов ниже (skins) —
-    -- обычная дверь (скин 0) ручку сохраняет.
     DoorHandleBodygroup = {
-        group = 1, -- handle01
-        value = 0, -- empty (без ручки)
-        skins = {14, 15, 16, 17}, -- заменить на те скины, у которых нужно убрать ручку
+        group = 1,
+        value = 0,
+        skins = { 14, 15, 16, 17 },
     },
 
-    -- список доступных инструментов взлома.
-    -- порядок в массиве = порядок кружков в меню:
-    -- [1] -> верхний кружок, [2] -> нижний левый, [3] -> нижний правый
+    -- Список доступных инструментов взлома.
     Tools = {
         {
-            id          = "fist",
-            name        = "Голые руки",
-            icon        = "door_breaker/fist.png",
-            time        = 150, -- 2:30
-            hitSound    = "door_breaker/fist_hit.mp3",
+            id = "fist",
+            name = "Голые руки",
+            icon = "door_breaker/fist.png",
+            time = 150,
+            hitSound = "door_breaker/fist_hit.mp3",
             hitInterval = 0.6,
             doorTypes = { wood = true },
         },
         {
-            id             = "axe",
-            name           = "Топор",
-            icon           = "door_breaker/axe.png",
-            time           = 60,
+            id = "axe",
+            name = "Топор",
+            icon = "door_breaker/axe.png",
+            time = 60,
             requiredWeapons = {
-                ["tfa_dayr_axe_rust"] = true, -- замени/добавь реальные классы топоров
+                ["tfa_dayr_axe_rust"] = true,
                 ["tfa_dayr_axe_normal"] = true,
                 ["tfa_dayr_axe_handmade"] = true,
                 ["tfa_dayr_axe_steeltools"] = true,
                 ["tfa_dayr_axe_irontool"] = true,
                 ["tfa_dayr_axe_flint"] = true,
-                
             },
-            hitSound       = "door_breaker/axe_hit.ogg",
-            hitInterval    = 0.8,
+            hitSound = "door_breaker/axe_hit.ogg",
+            hitInterval = 0.8,
             weaponSwingAnim = true,
-            swingDuration   = 0.38, 
+            swingDuration = 0.38,
             doorTypes = { wood = true },
         },
         {
-            id          = "crowbar",
-            name        = "Лом",
-            icon        = "door_breaker/crowbar.png",
-            time        = 10, -- время по умолчанию (дерево)
+            id = "crowbar",
+            name = "Лом",
+            icon = "door_breaker/crowbar.png",
+            time = 10,
             timeByDoorType = {
-                iron = 150, -- 2:30 для железной двери
+                iron = 150,
             },
             requiredWeapons = {
-                ["weapon_crowbar"] = true, -- стандартный лом, поменять если появится свой
+                ["weapon_crowbar"] = true,
             },
-            hitSound    = "door_breaker/crowbar_hit.ogg",
+            hitSound = "door_breaker/crowbar_hit.ogg",
             hitInterval = 0.5,
             weaponSwingAnim = true,
-            swingDuration   = 0.24,
+            swingDuration = 0.24,
             doorTypes = { wood = true, iron = true },
         },
         {
-            id          = "hacksaw",
-            name        = "Пила",
-            icon        = "door_breaker/hacksaw.png",
-            time        = 60,
+            id = "hacksaw",
+            name = "Пила",
+            icon = "door_breaker/hacksaw.png",
+            time = 60,
             requiredWeapons = {
-                ["weapon_hacksaw"] = true, -- стандартная пила, поменять если появится свой
+                ["weapon_hacksaw"] = true,
             },
-            hitSound    = "door_breaker/hacksaws.ogg",
+            hitSound = "door_breaker/hacksaws.ogg",
             hitInterval = 0.5,
             weaponSwingAnim = true,
-            swingDuration   = 0.24,
+            swingDuration = 0.24,
             doorTypes = { iron = true },
         },
         {
-            id          = "grenade",
-            name        = "Граната",
-            icon        = "door_breaker/grenade.png",
-            time        = 1,
+            id = "grenade",
+            name = "Граната",
+            icon = "door_breaker/grenade.png",
+            time = 1,
             requiredWeapons = {
-                ["dayr_handmade_grenade"] = true, -- заменить на реальный класс взрывчатки, если он есть
+                ["dayr_handmade_grenade"] = true,
             },
-            hitSound    = "door_breaker/explosion.ogg",
+            hitSound = "door_breaker/explosion.ogg",
             hitInterval = 0.5,
             weaponSwingAnim = true,
-            swingDuration   = 0.24,
+            swingDuration = 0.24,
             doorTypes = { iron = true },
         },
-        
-
     },
-    -- ПАСХАЛКА: если во время взлома игрок нажмёт колесико мыши (СКМ),
-    -- сверху него заспавнится дверь и убьёт его.
+
+    -- Пасхалка: во время взлома можно активировать удар дверью по игроку.
     EasterEgg = {
-        enabled     = true,
-        model       = "models/door_breaker/door01_left_custom.mdl",
-        spawnHeight = 220, -- насколько высоко над головой спавнится дверь
-        cooldown    = 5,   -- секунд между срабатываниями у одного игрока (защита от спама)
+        enabled = true,
+        model = "models/door_breaker/door01_left_custom.mdl",
+        spawnHeight = 220,
+        cooldown = 5,
     },
 }
