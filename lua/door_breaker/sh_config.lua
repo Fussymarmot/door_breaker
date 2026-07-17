@@ -113,7 +113,7 @@ DoorBreaker.Config = {
     DoorHandleBodygroup = {
         group = 1,
         value = 0,
-        skins = { 14, 15, 16, 17 },
+        skins = { 14, 15, 16, 17, 18, 19, 20 },
     },
 
     -- Список доступных инструментов взлома.
