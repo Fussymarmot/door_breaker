@@ -15,7 +15,7 @@
     ],
     "description": "Аддон добавляющий возможность ломать двери в Garry's Mod как в Day r survival. Включает в себя систему меню, анимации и звуковые эффекты.",
     "author": "FussyMarmot, Vasilisk",
-    "version": "2.1.3",
+    "version": "2.1.4",
     "workshopdependencies": [
         "3691338832",
         "1400654980",

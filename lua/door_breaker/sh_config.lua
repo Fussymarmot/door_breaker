@@ -41,6 +41,9 @@ DoorBreaker.Config = {
             [15] = "iron_door",
             [16] = "wood_door",
             [17] = "steel_door",
+            [18] = "blocked_door",
+            [19] = "iron_door2",
+            [20] = "steel_door2",
         },
 
         width = 400,
@@ -75,7 +78,7 @@ DoorBreaker.Config = {
     -- Случайный скин для дверей с заменённой моделью.
     RandomSkin = {
         chance = 0.10,
-        pool = { 14, 15, 16, 17 },
+        pool = { 14, 15, 16, 17, 18, 19, 20 },
     },
 
     -- Расстояние, при котором двери считаются двойными.
@@ -101,6 +104,9 @@ DoorBreaker.Config = {
         [15] = "iron",
         [16] = "wood",
         [17] = "iron",
+        [18] = "wood",
+        [19] = "iron",
+        [20] = "iron",
     },
 
     -- Bodygroup ручки на кастомной модели двери.

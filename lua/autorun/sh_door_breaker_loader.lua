@@ -63,6 +63,12 @@ if SERVER then
     resource.AddSingleFile("materials/door_breaker/minigame/iron_door_open.jpg")
     resource.AddSingleFile("materials/door_breaker/minigame/steel_door.jpg")
     resource.AddSingleFile("materials/door_breaker/minigame/steel_door_open.jpg")
+    resource.AddSingleFile("materials/door_breaker/minigame/blocked_door.jpg")
+    resource.AddSingleFile("materials/door_breaker/minigame/blocked_door_open.jpg")
+    resource.AddSingleFile("materials/door_breaker/minigame/iron_door2.jpg")
+    resource.AddSingleFile("materials/door_breaker/minigame/iron_door2_open.jpg")
+    resource.AddSingleFile("materials/door_breaker/minigame/steel_door2.jpg")
+    resource.AddSingleFile("materials/door_breaker/minigame/steel_door2_open.jpg")
 
     resource.AddSingleFile("sound/door_breaker/axe_hit.ogg")
     resource.AddSingleFile("sound/door_breaker/crowbar_hit.ogg")
