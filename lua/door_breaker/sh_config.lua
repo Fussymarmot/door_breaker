@@ -169,7 +169,8 @@ DoorBreaker.Config = {
             icon = "door_breaker/hacksaw.png",
             time = 60,
             requiredWeapons = {
-                ["weapon_hacksaw"] = true,
+                ["tfa_dayr_hacksaw_rusted"] = true,
+                ["tfa_dayr_hacksaw"] = true,
             },
             hitSound = "door_breaker/hacksaws.ogg",
             hitInterval = 0.5,
@@ -184,6 +185,8 @@ DoorBreaker.Config = {
             time = 1,
             requiredWeapons = {
                 ["dayr_handmade_grenade"] = true,
+                ["tfa_dayr_dynamite"] = true,
+                ["weapon_frag"] = true,
             },
             hitSound = "door_breaker/explosion.ogg",
             hitInterval = 0.5,
