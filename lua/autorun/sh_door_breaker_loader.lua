@@ -18,7 +18,19 @@ IncludeShared("door_breaker/sh_config.lua")
 IncludeShared("door_breaker/sh_util.lua")
 
 if SERVER then
-    CreateConVar("door_breaker_skin_chance", "0.10", FCVAR_ARCHIVE, "Шанс появления кастомного скина двери (0.0 - 1.0)")
+    CreateConVar("door_breaker_skin_chance", "0.20", FCVAR_ARCHIVE + FCVAR_REPLICATED,
+        "Шанс появления кастомной двери (0.0 - 1.0)")
+
+    -- Вес каждого кастомного скина. Значения используются как доли
+    -- внутри уже выпавшей кастомной двери и нормализуются автоматически.
+    for _, skinId in ipairs(DoorBreaker.Config.RandomSkin.pool or {}) do
+        CreateConVar(
+            "door_breaker_skin_weight_" .. skinId,
+            tostring((DoorBreaker.Config.RandomSkin.weights or {})[skinId] or 0),
+            FCVAR_ARCHIVE + FCVAR_REPLICATED,
+            "Вес кастомного скина двери " .. skinId .. " (0 - 100)"
+        )
+    end
 
     -- Клиентские файлы отправляются игрокам.
     AddCSLuaFile("door_breaker/cl_ui.lua")
@@ -36,6 +48,7 @@ if SERVER then
     util.AddNetworkString("DoorBreaker_EasterEgg")
     util.AddNetworkString("DoorBreaker_MinigameHit")
     util.AddNetworkString("DoorBreaker_StartResult")
+    util.AddNetworkString("DoorBreaker_UpdateSkinSettings")
 
     include("door_breaker/sv_breaking.lua")
     include("door_breaker/sv_model_swap.lua")
